@@ -1,5 +1,7 @@
 # ParcelPilot Support Agent
 
+**Live demo:** https://calquity-thanish.vercel.app/
+
 I built this for the CalQuity take-home. ParcelPilot is a fake B2B logistics company. They handed me a messy pack on purpose — old policy, wrong tickets, two customer contracts that override the SOP — and asked me to put a working support agent on top of it.
 
 I treated the clock as frozen at **16 Aug 2026, 11:00 Asia/Kolkata** (Sunday). Every fee, credit, and SLA I calculate uses that time.
