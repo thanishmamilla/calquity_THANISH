@@ -14,7 +14,7 @@ import { buildTrust } from "./trust";
 import { runTool } from "./tools";
 import type { AgentResult, ChatMessage, PendingAction, Session, ToolStep } from "./types";
 
-const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"];
+const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-flash-lite"];
 
 const tools: FunctionDeclaration[] = [
   {
@@ -144,6 +144,13 @@ function toHistory(messages: ChatMessage[]): Content[] {
   return compact;
 }
 
+function asPlainObject(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
+  }
+  return { result: value ?? null };
+}
+
 export async function runAgent(
   session: Session,
   messages: ChatMessage[],
@@ -190,8 +197,11 @@ async function runWithModel(
   const grounded = prefetched.grounding
     ? `${userText}\n\n${prefetched.grounding}`
     : userText;
-  const chat = model.startChat({ history: toHistory(messages) });
-  let result = await chat.sendMessage(grounded);
+  const contents: Content[] = [
+    ...toHistory(messages),
+    { role: "user", parts: [{ text: grounded }] },
+  ];
+  let result = await model.generateContent({ contents });
   const steps: ToolStep[] = [...prefetched.steps];
   const collected: unknown[] = [...prefetched.facts];
   let pendingAction: PendingAction | null = null;
@@ -200,7 +210,13 @@ async function runWithModel(
     const calls = result.response.functionCalls() ?? [];
     if (!calls.length) break;
 
-    const fnResponses = [];
+    const modelParts = result.response.candidates?.[0]?.content?.parts?.length
+      ? result.response.candidates[0].content.parts
+      : calls.map((call) => ({ functionCall: { name: call.name, args: call.args } }));
+    contents.push({ role: "model", parts: modelParts });
+
+    const responseParts = [];
+    const textResults: unknown[] = [];
     for (const call of calls) {
       const args = (call.args ?? {}) as Record<string, unknown>;
       const running: ToolStep = {
@@ -227,14 +243,30 @@ async function runWithModel(
           };
         }
       }
-      fnResponses.push({
+      const payload = asPlainObject(output.result);
+      textResults.push({ tool: call.name, args, result: payload });
+      responseParts.push({
         functionResponse: {
           name: call.name,
-          response: output.result as object,
+          response: payload,
         },
       });
     }
-    result = await chat.sendMessage(fnResponses);
+
+    contents.push({ role: "user", parts: responseParts });
+    try {
+      result = await model.generateContent({ contents });
+    } catch {
+      contents[contents.length - 1] = {
+        role: "user",
+        parts: [
+          {
+            text: `Tool results (use these; do not call the same tools again unless needed):\n${JSON.stringify(textResults, null, 2)}`,
+          },
+        ],
+      };
+      result = await model.generateContent({ contents });
+    }
   }
 
   let reply = result.response.text()?.trim() || "I could not produce an answer. Please try again.";
