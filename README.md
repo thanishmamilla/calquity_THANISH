@@ -78,7 +78,7 @@ I also don’t hand Gemini the raw Excel file. It only sees what a tool already 
 
 I wrote the source-rank rules into the prompt, but I didn’t trust the prompt alone. The same rules live in the calculators and the search ranker. If the model feels confident about Policy v2, the retrieval still buries it.
 
-I try models in this order: `gemini-2.5-flash`, then `gemini-2.0-flash`, then `gemini-flash-latest`.
+I try models in this order: `gemini-3.5-flash`, then `gemini-3.5-flash-lite`, then `gemini-flash-latest`.
 
 ### How I designed the tools
 
@@ -162,7 +162,7 @@ A bot that answers in two seconds and repeats a closed ticket’s ₹250 fee loo
 
 I wrote this in **Cursor**. I used it to scaffold the Next.js app, read the pack, build the tools and the permission layer, and push on the UI until the trail and the confirm bar were obvious.
 
-The live agent is **Google Gemini** (`gemini-2.5-flash` / `gemini-2.0-flash`). I did not use Gemini to write the repo.
+The live agent is **Google Gemini** (`gemini-3.5-flash` / `gemini-3.5-flash-lite`). I did not use Gemini to write the repo.
 
 I didn’t use any other coding assistant for the submitted code.
 

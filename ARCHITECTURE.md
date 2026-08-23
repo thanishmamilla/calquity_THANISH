@@ -14,7 +14,7 @@ The model never sees the raw workbook. It only sees tool results after the serve
 
 The system prompt states source precedence and the frozen snapshot time. Those rules are also implemented in code so a confident model cannot silently use Policy v2 or another customer’s contract.
 
-Models tried in order: `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-flash-latest`.
+Models tried in order: `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-flash-latest`.
 
 ## Tool design
 
